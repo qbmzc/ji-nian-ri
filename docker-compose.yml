@@ -4,6 +4,7 @@
 services:
   anniversary-app:
     build: .
+    image: ghcr.io/qbmzc/jinianri:20260226
     ports:
       - "${PORT:-8080}:${PORT:-8080}"
     environment:

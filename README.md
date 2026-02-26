@@ -55,7 +55,6 @@ npm start
 ### Docker 部署
 
 ```bash
-docker compose build
 # 使用 Docker Compose 一键启动
 docker compose up -d
 ```
