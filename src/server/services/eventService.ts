@@ -1,5 +1,6 @@
 import type {
   CalendarType,
+  CountDirection,
   Category,
   DayCalculation,
   Event,
@@ -10,13 +11,16 @@ import type {
 } from "../../shared/types.js";
 import { lunarToSolar, solarToLunar, isValidLunarDate } from "./lunarService.js";
 import { EventRepository } from "../db/database.js";
-import { CATEGORIES, DEFAULT_CALENDAR_TYPE, DEFAULT_CATEGORY } from "../../shared/constants.js";
+import { CATEGORIES, DEFAULT_CALENDAR_TYPE, DEFAULT_COUNT_DIRECTION, DEFAULT_CATEGORY } from "../../shared/constants.js";
 
 // 日期格式正则：YYYY-MM-DD
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 // 有效的日历类型
 const VALID_CALENDAR_TYPES: CalendarType[] = ["solar", "lunar"];
+
+// 有效的计数方向
+const VALID_COUNT_DIRECTIONS: CountDirection[] = ["countup", "countdown"];
 
 /**
  * 验证错误类，包含字段级错误详情
@@ -44,16 +48,20 @@ export class NotFoundError extends Error {
 /**
  * 计算事件日期与参考日期之间的天数差
  * 支持公历和农历日期，农历日期会自动转换为公历后再计算
+ * 根据 countDirection 决定展示逻辑：
+ * - countup（累计日）：从事件日期到今天已经过了多少天
+ * - countdown（倒数日）：距离下一个周年日还有多少天
  *
  * @param eventDate 事件日期，格式 YYYY-MM-DD（公历或农历）
  * @param calendarType 日历类型："solar" 公历 | "lunar" 农历
+ * @param countDirection 计数方向："countup" 累计日 | "countdown" 倒数日
  * @param today 参考日期（可选），格式 YYYY-MM-DD，默认为当前日期
  * @returns DayCalculation 天数计算结果
- * @throws 日期格式无效或农历转换失败时抛出异常
  */
 export function calculateDays(
   eventDate: string,
   calendarType: CalendarType,
+  countDirection: CountDirection = "countup",
   today?: string
 ): DayCalculation {
   // 确定用于计算的公历日期
@@ -63,39 +71,111 @@ export function calculateDays(
   // 确定参考日期（今天）
   const todayStr = today ?? new Date().toISOString().slice(0, 10);
 
-  // 解析日期并计算天数差（仅基于日期，不考虑时区）
-  const eventTime = new Date(solarDate + "T00:00:00").getTime();
-  const todayTime = new Date(todayStr + "T00:00:00").getTime();
-  const diffMs = eventTime - todayTime;
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  // 倒数日模式：计算距离下一个周年日的天数
+  if (countDirection === "countdown") {
+    return calculateCountdown(solarDate, eventDate, calendarType, todayStr);
+  }
 
-  // 根据天数差确定类型和标签
+  // 累计日模式：计算从事件日期到今天的天数差
+  const diffDays = daysBetween(solarDate, todayStr);
+
   if (diffDays < 0) {
     // 事件日期在过去
     const days = Math.abs(diffDays);
-    return {
-      days,
-      type: "past",
-      label: `已经 ${days} 天`,
-      solarDate,
-    };
+    return { days, type: "past", label: `已经 ${days} 天`, solarDate };
   } else if (diffDays > 0) {
     // 事件日期在未来
-    return {
-      days: diffDays,
-      type: "future",
-      label: `还有 ${diffDays} 天`,
-      solarDate,
-    };
+    return { days: diffDays, type: "future", label: `还有 ${diffDays} 天开始`, solarDate };
   } else {
-    // 事件日期就是今天
-    return {
-      days: 0,
-      type: "today",
-      label: "就是今天",
-      solarDate,
-    };
+    return { days: 0, type: "today", label: "就是今天", solarDate };
   }
+}
+
+/**
+ * 计算两个日期之间的天数差（eventDate - todayStr）
+ */
+function daysBetween(dateA: string, dateB: string): number {
+  const timeA = new Date(dateA + "T00:00:00").getTime();
+  const timeB = new Date(dateB + "T00:00:00").getTime();
+  return Math.round((timeA - timeB) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * 倒数日计算：找到下一个周年日，计算距离今天还有多少天
+ * 对于农历事件，每年的农历日期对应不同的公历日期，需要逐年转换
+ */
+function calculateCountdown(
+  solarDate: string,
+  originalDate: string,
+  calendarType: CalendarType,
+  todayStr: string
+): DayCalculation {
+  const todayDate = new Date(todayStr + "T00:00:00");
+  const todayYear = todayDate.getFullYear();
+  const [, monthStr, dayStr] = originalDate.split("-");
+  const eventMonth = parseInt(monthStr, 10);
+  const eventDay = parseInt(dayStr, 10);
+
+  // 尝试今年和明年的周年日，取最近的未来日期
+  for (let yearOffset = 0; yearOffset <= 1; yearOffset++) {
+    const targetYear = todayYear + yearOffset;
+    let nextAnniversary: string;
+
+    if (calendarType === "lunar") {
+      // 农历事件：用目标年份的同月同日转换为公历
+      try {
+        const lunarDateStr = `${targetYear}-${monthStr.padStart(2, "0")}-${dayStr.padStart(2, "0")}`;
+        nextAnniversary = lunarToSolar(lunarDateStr);
+      } catch {
+        // 农历日期在该年不存在（如闰月），跳过
+        continue;
+      }
+    } else {
+      // 公历事件：直接替换年份
+      // 处理 2 月 29 日的特殊情况
+      if (eventMonth === 2 && eventDay === 29) {
+        const isLeap = (targetYear % 4 === 0 && targetYear % 100 !== 0) || targetYear % 400 === 0;
+        if (!isLeap) {
+          // 非闰年用 3 月 1 日代替
+          nextAnniversary = `${targetYear}-03-01`;
+        } else {
+          nextAnniversary = `${targetYear}-02-29`;
+        }
+      } else {
+        nextAnniversary = `${targetYear}-${monthStr}-${dayStr}`;
+      }
+    }
+
+    const diff = daysBetween(nextAnniversary, todayStr);
+
+    if (diff > 0) {
+      // 找到了未来的周年日
+      return {
+        days: diff,
+        type: "future",
+        label: `还有 ${diff} 天`,
+        solarDate: nextAnniversary,
+      };
+    } else if (diff === 0) {
+      // 今天就是周年日
+      return {
+        days: 0,
+        type: "today",
+        label: "就是今天",
+        solarDate: nextAnniversary,
+      };
+    }
+    // diff < 0 表示今年的已经过了，继续看明年
+  }
+
+  // 兜底：不应该到这里，但以防万一用原始日期计算
+  const fallbackDiff = Math.abs(daysBetween(solarDate, todayStr));
+  return {
+    days: fallbackDiff,
+    type: "past",
+    label: `已过 ${fallbackDiff} 天`,
+    solarDate,
+  };
 }
 
 
@@ -170,6 +250,17 @@ function validateCreateInput(
     });
   }
 
+  // 计数方向验证：可选，必须是 "countup" 或 "countdown"
+  if (
+    input.countDirection != null &&
+    !VALID_COUNT_DIRECTIONS.includes(input.countDirection as CountDirection)
+  ) {
+    errors.push({
+      field: "countDirection",
+      message: `Count direction must be one of: ${VALID_COUNT_DIRECTIONS.join(", ")}`,
+    });
+  }
+
   // 分类验证：可选，必须是预设分类之一
   if (
     input.category != null &&
@@ -220,6 +311,17 @@ function validateUpdateInput(
     errors.push({
       field: "calendarType",
       message: `Calendar type must be one of: ${VALID_CALENDAR_TYPES.join(", ")}`,
+    });
+  }
+
+  // 计数方向验证：如果提供了，必须是有效值
+  if (
+    input.countDirection != null &&
+    !VALID_COUNT_DIRECTIONS.includes(input.countDirection as CountDirection)
+  ) {
+    errors.push({
+      field: "countDirection",
+      message: `Count direction must be one of: ${VALID_COUNT_DIRECTIONS.join(", ")}`,
     });
   }
 
@@ -320,7 +422,7 @@ export class EventService {
 
     // 为每个事件附加天数计算和农历信息
     return events.map((event) => {
-      const dayCalculation = calculateDays(event.date, event.calendarType);
+      const dayCalculation = calculateDays(event.date, event.calendarType, event.countDirection);
       const lunarInfo = getLunarInfo(event.date, event.calendarType);
 
       return {
@@ -346,6 +448,7 @@ export class EventService {
       name: input.name,
       date: input.date,
       calendarType: input.calendarType ?? DEFAULT_CALENDAR_TYPE,
+      countDirection: input.countDirection ?? DEFAULT_COUNT_DIRECTION,
       category: input.category ?? DEFAULT_CATEGORY,
       note: input.note ?? "",
       icon: input.icon ?? "",

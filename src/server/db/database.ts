@@ -6,6 +6,7 @@ import type {
   CreateEventInput,
   UpdateEventInput,
   CalendarType,
+  CountDirection,
   Category,
 } from "../../shared/types.js";
 
@@ -15,6 +16,7 @@ interface EventRow {
   name: string;
   date: string;
   calendar_type: string;
+  count_direction: string;
   category: string;
   note: string;
   icon: string;
@@ -29,6 +31,7 @@ const CREATE_EVENTS_TABLE = `
     name TEXT NOT NULL,
     date TEXT NOT NULL,
     calendar_type TEXT NOT NULL DEFAULT 'solar',
+    count_direction TEXT NOT NULL DEFAULT 'countup',
     category TEXT NOT NULL DEFAULT '其他',
     note TEXT DEFAULT '',
     icon TEXT DEFAULT '',
@@ -55,6 +58,7 @@ function rowToEvent(row: EventRow): Event {
     name: row.name,
     date: row.date,
     calendarType: row.calendar_type as CalendarType,
+    countDirection: (row.count_direction ?? "countup") as CountDirection,
     category: row.category as Category,
     note: row.note,
     icon: row.icon,
@@ -92,6 +96,13 @@ export class EventRepository {
     this.db.exec(CREATE_EVENTS_TABLE);
     this.db.exec(CREATE_CATEGORY_INDEX);
     this.db.exec(CREATE_DATE_INDEX);
+
+    // 迁移：为已有表添加 count_direction 列
+    const columns = this.db.pragma("table_info(events)") as Array<{ name: string }>;
+    const hasCountDirection = columns.some((col) => col.name === "count_direction");
+    if (!hasCountDirection) {
+      this.db.exec("ALTER TABLE events ADD COLUMN count_direction TEXT NOT NULL DEFAULT 'countup'");
+    }
   }
 
   /**
@@ -127,14 +138,15 @@ export class EventRepository {
    */
   insert(event: CreateEventInput): Event {
     const stmt = this.db.prepare(`
-      INSERT INTO events (name, date, calendar_type, category, note, icon)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO events (name, date, calendar_type, count_direction, category, note, icon)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
       event.name,
       event.date,
       event.calendarType ?? "solar",
+      event.countDirection ?? "countup",
       event.category ?? "其他",
       event.note ?? "",
       event.icon ?? ""
@@ -158,6 +170,7 @@ export class EventRepository {
       name: event.name ?? existing.name,
       date: event.date ?? existing.date,
       calendarType: event.calendarType ?? existing.calendarType,
+      countDirection: event.countDirection ?? existing.countDirection,
       category: event.category ?? existing.category,
       note: event.note ?? existing.note,
       icon: event.icon ?? existing.icon,
@@ -165,7 +178,7 @@ export class EventRepository {
 
     const stmt = this.db.prepare(`
       UPDATE events
-      SET name = ?, date = ?, calendar_type = ?, category = ?, note = ?, icon = ?,
+      SET name = ?, date = ?, calendar_type = ?, count_direction = ?, category = ?, note = ?, icon = ?,
           updated_at = datetime('now')
       WHERE id = ?
     `);
@@ -174,6 +187,7 @@ export class EventRepository {
       merged.name,
       merged.date,
       merged.calendarType,
+      merged.countDirection,
       merged.category,
       merged.note,
       merged.icon,

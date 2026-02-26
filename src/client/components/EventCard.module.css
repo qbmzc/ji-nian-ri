@@ -34,6 +34,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+}
+
+/* 倒数日/累计日标签 */
+.badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  background: #f0f4ff;
+  color: #5b9bd5;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* 日期信息区域 */

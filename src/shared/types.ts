@@ -1,6 +1,9 @@
 // 日历类型：公历或农历
 export type CalendarType = "solar" | "lunar";
 
+// 计数方向：累计日或倒数日
+export type CountDirection = "countup" | "countdown";
+
 // 预设分类枚举
 export type Category = "恋爱" | "生日" | "纪念日" | "节日" | "其他";
 
@@ -10,6 +13,7 @@ export interface Event {
   name: string;                // 事件名称（必填）
   date: string;                // 事件日期，ISO 8601 格式 "YYYY-MM-DD"（必填）
   calendarType: CalendarType;  // 日历类型：公历或农历（必填，默认 "solar"）
+  countDirection: CountDirection; // 计数方向：累计日或倒数日（必填，默认 "countup"）
   category: Category;          // 分类（必填，默认 "其他"）
   note: string;                // 备注（可选，默认空字符串）
   icon: string;                // 图标标识（可选，默认由分类决定）
@@ -47,6 +51,7 @@ export interface CreateEventInput {
   name: string;                    // 必填
   date: string;                    // 必填，YYYY-MM-DD（公历或农历日期）
   calendarType?: CalendarType;     // 可选，默认 "solar"
+  countDirection?: CountDirection;  // 可选，默认 "countup"
   category?: Category;             // 可选，默认 "其他"
   note?: string;                   // 可选
   icon?: string;                   // 可选
@@ -57,6 +62,7 @@ export interface UpdateEventInput {
   name?: string;
   date?: string;
   calendarType?: CalendarType;
+  countDirection?: CountDirection;
   category?: Category;
   note?: string;
   icon?: string;

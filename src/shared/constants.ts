@@ -1,4 +1,4 @@
-import type { CalendarType, Category } from "./types";
+import type { CalendarType, Category, CountDirection } from "./types";
 
 // 预设分类列表
 export const CATEGORIES: Category[] = [
@@ -20,6 +20,9 @@ export const CATEGORY_ICON_MAP: Record<Category, string> = {
 
 // 默认日历类型
 export const DEFAULT_CALENDAR_TYPE: CalendarType = "solar";
+
+// 默认计数方向
+export const DEFAULT_COUNT_DIRECTION: CountDirection = "countup";
 
 // 默认分类
 export const DEFAULT_CATEGORY: Category = "其他";

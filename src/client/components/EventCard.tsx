@@ -41,7 +41,7 @@ function formatDate(dateStr: string): string {
 }
 
 export function EventCard({ event, onEdit, onDelete }: EventCardProps) {
-  const { name, icon, calendarType, dayCalculation, lunarInfo } = event;
+  const { name, icon, calendarType, countDirection, dayCalculation, lunarInfo } = event;
 
   // 获取展示用的 emoji 图标
   const emoji = getEmoji(icon);
@@ -49,12 +49,16 @@ export function EventCard({ event, onEdit, onDelete }: EventCardProps) {
   // 判断是否为农历事件
   const isLunar = calendarType === "lunar";
 
+  // 计数方向标签
+  const directionLabel = countDirection === "countdown" ? "倒数日" : "累计日";
+
   return (
     <div className={styles.card}>
-      {/* 头部：图标 + 名称 */}
+      {/* 头部：图标 + 名称 + 类型标签 */}
       <div className={styles.header}>
         <span className={styles.icon}>{emoji}</span>
         <span className={styles.name}>{name}</span>
+        <span className={styles.badge}>{directionLabel}</span>
       </div>
 
       {/* 日期信息 */}

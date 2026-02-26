@@ -39,7 +39,7 @@ export function createApp(repository?: EventRepository): express.Express {
   app.use(express.static(clientDistPath));
 
   // SPA 路由回退：非 API 路由且未匹配静态文件时返回 index.html
-  app.get("*", (req, res, next) => {
+  app.get("/{*path}", (req, res, next) => {
     if (req.path.startsWith("/api")) {
       return next();
     }

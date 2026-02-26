@@ -1,7 +1,7 @@
 # ============================================
 # 阶段 1：构建前端和后端
 # ============================================
-FROM node:18-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN npm run build:server
 # ============================================
 # 阶段 2：生产运行环境
 # ============================================
-FROM node:18-alpine AS production
+FROM node:24-alpine AS production
 
 WORKDIR /app
 
@@ -37,8 +37,9 @@ RUN npm ci --omit=dev
 # 从构建阶段复制前端构建产物
 COPY --from=build /app/dist/client/ dist/client/
 
-# 从构建阶段复制后端构建产物
+# 从构建阶段复制后端构建产物（包含 server/ 和 shared/ 目录）
 COPY --from=build /app/dist/server/ dist/server/
+COPY --from=build /app/dist/shared/ dist/shared/
 
 # 创建数据目录（SQLite 数据库存储位置）
 RUN mkdir -p data

@@ -9,12 +9,13 @@
 import { useState } from "react";
 import type {
   CalendarType,
+  CountDirection,
   Category,
   CreateEventInput,
   EventWithDays,
   UpdateEventInput,
 } from "../../shared/types.js";
-import { CATEGORIES, DEFAULT_CALENDAR_TYPE, DEFAULT_CATEGORY } from "../../shared/constants.js";
+import { CATEGORIES, DEFAULT_CALENDAR_TYPE, DEFAULT_COUNT_DIRECTION, DEFAULT_CATEGORY } from "../../shared/constants.js";
 import styles from "./EventForm.module.css";
 
 interface EventFormProps {
@@ -41,6 +42,9 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
   const [date, setDate] = useState(event?.date ?? "");
   const [calendarType, setCalendarType] = useState<CalendarType>(
     event?.calendarType ?? DEFAULT_CALENDAR_TYPE
+  );
+  const [countDirection, setCountDirection] = useState<CountDirection>(
+    event?.countDirection ?? DEFAULT_COUNT_DIRECTION
   );
   const [category, setCategory] = useState<Category>(
     event?.category ?? DEFAULT_CATEGORY
@@ -82,6 +86,7 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
       if (name !== event!.name) input.name = name.trim();
       if (date !== event!.date) input.date = date;
       if (calendarType !== event!.calendarType) input.calendarType = calendarType;
+      if (countDirection !== event!.countDirection) input.countDirection = countDirection;
       if (category !== event!.category) input.category = category;
       if (note !== event!.note) input.note = note;
       if (icon !== event!.icon) input.icon = icon;
@@ -92,6 +97,7 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
         name: name.trim(),
         date,
         calendarType,
+        countDirection,
         category,
         note: note || undefined,
         icon: icon || undefined,
@@ -174,6 +180,33 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
         </div>
 
         {/* 分类下拉选择 */}
+        <div className={styles.field}>
+          <label className={styles.label}>类型</label>
+          <div className={styles.radioGroup}>
+            <label className={styles.radioLabel}>
+              <input
+                type="radio"
+                name="countDirection"
+                value="countup"
+                checked={countDirection === "countup"}
+                onChange={() => setCountDirection("countup")}
+              />
+              累计日
+            </label>
+            <label className={styles.radioLabel}>
+              <input
+                type="radio"
+                name="countDirection"
+                value="countdown"
+                checked={countDirection === "countdown"}
+                onChange={() => setCountDirection("countdown")}
+              />
+              倒数日
+            </label>
+          </div>
+        </div>
+
+        {/* 事件分类下拉选择 */}
         <div className={styles.field}>
           <label className={styles.label}>分类</label>
           <select
