@@ -1,0 +1,166 @@
+/* EventForm 组件样式 - 事件创建/编辑表单（模态弹窗） */
+
+/* 遮罩层 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+/* 表单容器 */
+.form {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 表单标题 */
+.title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 0.25rem;
+  text-align: center;
+}
+
+/* 表单字段组 */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* 标签 */
+.label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+}
+
+/* 必填标记 */
+.required {
+  color: #e07c5a;
+  margin-left: 2px;
+}
+
+/* 通用输入框样式 */
+.input,
+.select,
+.textarea {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #333;
+  background: #fafafa;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: #5b9bd5;
+  box-shadow: 0 0 0 2px rgba(91, 155, 213, 0.15);
+  background: #fff;
+}
+
+/* 错误状态 */
+.inputError {
+  border-color: #e07c5a;
+}
+
+.inputError:focus {
+  border-color: #e07c5a;
+  box-shadow: 0 0 0 2px rgba(224, 124, 90, 0.15);
+}
+
+/* 错误提示文字 */
+.errorText {
+  font-size: 0.78rem;
+  color: #e07c5a;
+  margin: 0;
+}
+
+/* 下拉选择框 */
+.select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+/* 文本域 */
+.textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* 日历类型切换 */
+.radioGroup {
+  display: flex;
+  gap: 1rem;
+}
+
+.radioLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.radioLabel input[type="radio"] {
+  accent-color: #5b9bd5;
+}
+
+/* 按钮区域 */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.submitBtn,
+.cancelBtn {
+  flex: 1;
+  padding: 0.6rem 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.submitBtn {
+  background: #5b9bd5;
+  color: #fff;
+}
+
+.submitBtn:hover {
+  background: #4a87be;
+}
+
+.cancelBtn {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.cancelBtn:hover {
+  background: #eaeaea;
+}

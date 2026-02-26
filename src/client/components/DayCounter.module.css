@@ -1,0 +1,51 @@
+/* DayCounter 组件样式 - 天数计算展示 */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+/* 天数数字 - 突出显示 */
+.days {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* 描述标签 */
+.label {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+/* 过去 - 暖色调 */
+.past .days {
+  color: #e07c5a;
+}
+
+.past .label {
+  color: #c46a4b;
+}
+
+/* 未来 - 冷色调 */
+.future .days {
+  color: #5b9bd5;
+}
+
+.future .label {
+  color: #4a87be;
+}
+
+/* 今天 - 高亮色 */
+.today .days {
+  color: #e8a04c;
+  font-size: 1.5rem;
+}
+
+.today .label {
+  color: #d4903f;
+  font-weight: 600;
+}

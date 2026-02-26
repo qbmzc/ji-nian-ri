@@ -1,0 +1,14 @@
+# 纪念日应用 Docker Compose 配置
+# 使用方法：docker compose up -d
+
+services:
+  anniversary-app:
+    build: .
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      - PORT=${PORT:-8080}
+    volumes:
+      # 挂载数据目录，持久化 SQLite 数据库文件
+      - ./data:/app/data
+    restart: unless-stopped

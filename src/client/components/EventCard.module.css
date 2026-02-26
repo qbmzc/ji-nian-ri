@@ -1,0 +1,88 @@
+/* EventCard 组件样式 - 事件卡片 */
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 卡片头部：图标 + 名称 */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 日期信息区域 */
+.dateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.lunarDate {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+/* 操作按钮区域 */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.actionBtn {
+  flex: 1;
+  padding: 0.4rem 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.2s ease;
+}
+
+.editBtn {
+  background: #f0f4ff;
+  color: #5b9bd5;
+}
+
+.editBtn:hover {
+  background: #dce6f7;
+}
+
+.deleteBtn {
+  background: #fff0ed;
+  color: #e07c5a;
+}
+
+.deleteBtn:hover {
+  background: #fde0d9;
+}

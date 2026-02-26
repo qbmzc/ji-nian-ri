@@ -1,0 +1,47 @@
+/* CategoryFilter 组件样式 - 分类筛选栏 */
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+/* 分类标签按钮 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: #fff;
+  color: #666;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tag:hover {
+  border-color: #c0c0c0;
+  background: #fafafa;
+}
+
+/* 选中状态 */
+.active {
+  background: #f0f4ff;
+  border-color: #5b9bd5;
+  color: #5b9bd5;
+  font-weight: 600;
+}
+
+.active:hover {
+  background: #dce6f7;
+}
+
+/* emoji 图标 */
+.emoji {
+  font-size: 0.9rem;
+  line-height: 1;
+}
