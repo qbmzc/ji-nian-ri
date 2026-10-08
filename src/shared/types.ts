@@ -43,6 +43,7 @@ export interface DayCalculation {
 // 带天数计算的事件（API 响应）
 export interface EventWithDays extends Event {
   dayCalculation: DayCalculation;
+  nextOccurrence?: DayCalculation; // 下一次周年日期，原始日期仍用于累计天数
   lunarInfo?: LunarDate;   // 农历事件附带农历详细信息；公历事件附带对应农历信息
 }
 

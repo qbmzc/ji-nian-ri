@@ -164,3 +164,17 @@
 .cancelBtn:hover {
   background: #eaeaea;
 }
+.submitError {
+  margin: 0;
+  padding: 0.65rem;
+  border-radius: 8px;
+  background: #fff0ed;
+  color: #a83e2c;
+  font-size: 0.85rem;
+}
+
+.submitBtn:disabled,
+.cancelBtn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}

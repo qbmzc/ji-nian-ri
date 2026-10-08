@@ -37,7 +37,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
   if (!response.ok) {
     const errorBody = body as ApiErrorResponse;
-    const message = errorBody.error?.message ?? "Request failed";
+    const message = errorBody.error?.details?.map((detail) => detail.message).join("；")
+      || errorBody.error?.message || "请求失败";
     throw new Error(message);
   }
 

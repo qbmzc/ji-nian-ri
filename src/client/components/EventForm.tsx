@@ -25,6 +25,8 @@ interface EventFormProps {
   onSubmit: (input: CreateEventInput | UpdateEventInput) => void;
   /** 取消回调 */
   onCancel: () => void;
+  error?: string | null;
+  submitting?: boolean;
 }
 
 /** 表单验证错误 */
@@ -33,7 +35,7 @@ interface FormErrors {
   date?: string;
 }
 
-export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
+export function EventForm({ event, onSubmit, onCancel, error, submitting = false }: EventFormProps) {
   // 判断是否为编辑模式
   const isEdit = !!event;
 
@@ -110,7 +112,7 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
    * 点击遮罩层关闭表单
    */
   function handleOverlayClick(e: React.MouseEvent) {
-    if (e.target === e.currentTarget) {
+    if (!submitting && e.target === e.currentTarget) {
       onCancel();
     }
   }
@@ -121,13 +123,15 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
         <h2 className={styles.title}>
           {isEdit ? "编辑纪念日" : "创建纪念日"}
         </h2>
+        {error && <p className={styles.submitError} role="alert">{error}</p>}
 
         {/* 名称字段 */}
         <div className={styles.field}>
-          <label className={styles.label}>
+          <label htmlFor="event-name" className={styles.label}>
             名称<span className={styles.required}>*</span>
           </label>
           <input
+            id="event-name"
             type="text"
             className={`${styles.input} ${errors.name ? styles.inputError : ""}`}
             value={name}
@@ -140,14 +144,17 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
 
         {/* 日期字段 */}
         <div className={styles.field}>
-          <label className={styles.label}>
+          <label htmlFor="event-date" className={styles.label}>
             日期<span className={styles.required}>*</span>
           </label>
           <input
-            type="date"
+            id="event-date"
+            type={calendarType === "solar" ? "date" : "text"}
             className={`${styles.input} ${errors.date ? styles.inputError : ""}`}
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            placeholder={calendarType === "lunar" ? "YYYY-MM-DD，如 2024-08-15" : undefined}
+            inputMode={calendarType === "lunar" ? "numeric" : undefined}
           />
           {errors.date && <p className={styles.errorText}>{errors.date}</p>}
         </div>
@@ -249,11 +256,11 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
 
         {/* 操作按钮 */}
         <div className={styles.actions}>
-          <button type="button" className={styles.cancelBtn} onClick={onCancel}>
+          <button type="button" className={styles.cancelBtn} onClick={onCancel} disabled={submitting}>
             取消
           </button>
-          <button type="submit" className={styles.submitBtn}>
-            {isEdit ? "保存" : "创建"}
+          <button type="submit" className={styles.submitBtn} disabled={submitting}>
+            {submitting ? "保存中..." : isEdit ? "保存" : "创建"}
           </button>
         </div>
       </form>

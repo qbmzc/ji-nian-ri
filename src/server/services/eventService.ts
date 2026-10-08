@@ -69,11 +69,12 @@ export function calculateDays(
     calendarType === "lunar" ? lunarToSolar(eventDate) : eventDate;
 
   // 确定参考日期（今天）
-  const todayStr = today ?? new Date().toISOString().slice(0, 10);
+  const todayStr = today ?? localDateString(new Date());
 
   // 倒数日模式：计算距离下一个周年日的天数
   if (countDirection === "countdown") {
-    return calculateCountdown(solarDate, eventDate, calendarType, todayStr);
+    const occurrence = calculateNextOccurrence(eventDate, calendarType, todayStr);
+    return { ...occurrence, label: occurrence.type === "future" ? `还有 ${occurrence.days} 天` : occurrence.label };
   }
 
   // 累计日模式：计算从事件日期到今天的天数差
@@ -95,87 +96,47 @@ export function calculateDays(
  * 计算两个日期之间的天数差（eventDate - todayStr）
  */
 function daysBetween(dateA: string, dateB: string): number {
-  const timeA = new Date(dateA + "T00:00:00").getTime();
-  const timeB = new Date(dateB + "T00:00:00").getTime();
+  const timeA = Date.parse(dateA + "T00:00:00Z");
+  const timeB = Date.parse(dateB + "T00:00:00Z");
   return Math.round((timeA - timeB) / (1000 * 60 * 60 * 24));
 }
 
-/**
- * 倒数日计算：找到下一个周年日，计算距离今天还有多少天
- * 对于农历事件，每年的农历日期对应不同的公历日期，需要逐年转换
- */
-function calculateCountdown(
-  solarDate: string,
-  originalDate: string,
+function localDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** 计算下一次周年日期；闰日或农历小月不存在时跳到下一个有效年份。 */
+export function calculateNextOccurrence(
+  eventDate: string,
   calendarType: CalendarType,
-  todayStr: string
+  today = localDateString(new Date())
 ): DayCalculation {
-  const todayDate = new Date(todayStr + "T00:00:00");
-  const todayYear = todayDate.getFullYear();
-  const [, monthStr, dayStr] = originalDate.split("-");
-  const eventMonth = parseInt(monthStr, 10);
-  const eventDay = parseInt(dayStr, 10);
+  const originalSolarDate = calendarType === "lunar" ? lunarToSolar(eventDate) : eventDate;
+  if (originalSolarDate >= today) return calculateDays(eventDate, calendarType, "countup", today);
 
-  // 尝试今年和明年的周年日，取最近的未来日期
-  for (let yearOffset = 0; yearOffset <= 1; yearOffset++) {
-    const targetYear = todayYear + yearOffset;
-    let nextAnniversary: string;
+  const [, month, day] = eventDate.split("-");
+  const startYear = calendarType === "lunar"
+    ? solarToLunar(today).year
+    : Number(today.slice(0, 4));
 
+  for (let year = startYear; year < startYear + 20; year++) {
+    const candidate = `${year}-${month}-${day}`;
+    let solarDate: string;
     if (calendarType === "lunar") {
-      // 农历事件：用目标年份的同月同日转换为公历
-      try {
-        const lunarDateStr = `${targetYear}-${monthStr.padStart(2, "0")}-${dayStr.padStart(2, "0")}`;
-        nextAnniversary = lunarToSolar(lunarDateStr);
-      } catch {
-        // 农历日期在该年不存在（如闰月），跳过
-        continue;
-      }
+      if (!isValidLunarDate(candidate)) continue;
+      solarDate = lunarToSolar(candidate);
     } else {
-      // 公历事件：直接替换年份
-      // 处理 2 月 29 日的特殊情况
-      if (eventMonth === 2 && eventDay === 29) {
-        const isLeap = (targetYear % 4 === 0 && targetYear % 100 !== 0) || targetYear % 400 === 0;
-        if (!isLeap) {
-          // 非闰年用 3 月 1 日代替
-          nextAnniversary = `${targetYear}-03-01`;
-        } else {
-          nextAnniversary = `${targetYear}-02-29`;
-        }
-      } else {
-        nextAnniversary = `${targetYear}-${monthStr}-${dayStr}`;
-      }
+      if (!isValidSolarDate(candidate)) continue;
+      solarDate = candidate;
     }
-
-    const diff = daysBetween(nextAnniversary, todayStr);
-
-    if (diff > 0) {
-      // 找到了未来的周年日
-      return {
-        days: diff,
-        type: "future",
-        label: `还有 ${diff} 天`,
-        solarDate: nextAnniversary,
-      };
-    } else if (diff === 0) {
-      // 今天就是周年日
-      return {
-        days: 0,
-        type: "today",
-        label: "就是今天",
-        solarDate: nextAnniversary,
-      };
+    if (solarDate >= today && solarDate >= originalSolarDate) {
+      return calculateDays(solarDate, "solar", "countup", today);
     }
-    // diff < 0 表示今年的已经过了，继续看明年
   }
-
-  // 兜底：不应该到这里，但以防万一用原始日期计算
-  const fallbackDiff = Math.abs(daysBetween(solarDate, todayStr));
-  return {
-    days: fallbackDiff,
-    type: "past",
-    label: `已过 ${fallbackDiff} 天`,
-    solarDate,
-  };
+  throw new Error(`No upcoming occurrence for ${eventDate}`);
 }
 
 
@@ -290,7 +251,8 @@ function validateCreateInput(
  */
 function validateUpdateInput(
   input: UpdateEventInput,
-  existingCalendarType: CalendarType
+  existingCalendarType: CalendarType,
+  existingDate: string
 ): Array<{ field: string; message: string }> {
   const errors: Array<{ field: string; message: string }> = [];
 
@@ -326,18 +288,19 @@ function validateUpdateInput(
   }
 
   // 日期验证：如果提供了，必须是有效日期
-  if (input.date != null) {
-    if (!DATE_PATTERN.test(input.date)) {
+  if (input.date != null || input.calendarType != null) {
+    const date = input.date ?? existingDate;
+    if (!DATE_PATTERN.test(date)) {
       errors.push({ field: "date", message: "Date must be in YYYY-MM-DD format" });
     } else {
       // 使用更新后的日历类型（如果同时提供了），否则使用现有的
       const calType = input.calendarType ?? existingCalendarType;
       if (calType === "lunar") {
-        if (!isValidLunarDate(input.date)) {
+        if (!isValidLunarDate(date)) {
           errors.push({ field: "date", message: "Invalid lunar date" });
         }
       } else {
-        if (!isValidSolarDate(input.date)) {
+        if (!isValidSolarDate(date)) {
           errors.push({ field: "date", message: "Invalid solar date" });
         }
       }
@@ -377,11 +340,6 @@ function getLunarInfo(date: string, calendarType: CalendarType): LunarDate | und
   try {
     if (calendarType === "lunar") {
       // 农历事件：从存储的农历日期解析信息
-      const [yearStr, monthStr, dayStr] = date.split("-");
-      const year = parseInt(yearStr, 10);
-      const month = parseInt(monthStr, 10);
-      const day = parseInt(dayStr, 10);
-
       // 使用 solarToLunar 获取完整的农历信息需要先转为公历再转回
       // 但这里直接用 lunarToSolar 转为公历，再用 solarToLunar 获取完整信息
       const solarDate = lunarToSolar(date);
@@ -423,11 +381,15 @@ export class EventService {
     // 为每个事件附加天数计算和农历信息
     return events.map((event) => {
       const dayCalculation = calculateDays(event.date, event.calendarType, event.countDirection);
+      const nextOccurrence = event.category === "其他" || event.countDirection === "countdown"
+        ? undefined
+        : calculateNextOccurrence(event.date, event.calendarType);
       const lunarInfo = getLunarInfo(event.date, event.calendarType);
 
       return {
         ...event,
         dayCalculation,
+        nextOccurrence,
         lunarInfo,
       } as EventWithDays;
     });
@@ -468,7 +430,7 @@ export class EventService {
     }
 
     // 验证输入
-    const errors = validateUpdateInput(input, existing.calendarType);
+    const errors = validateUpdateInput(input, existing.calendarType, existing.date);
     if (errors.length > 0) {
       throw new ValidationError(errors);
     }

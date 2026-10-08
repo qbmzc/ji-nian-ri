@@ -82,6 +82,11 @@ export function EventCard({ event, onEdit, onDelete }: EventCardProps) {
 
       {/* 天数计算展示 */}
       <DayCounter calculation={dayCalculation} />
+      {event.nextOccurrence && dayCalculation.type === "past" && (
+        <p className={styles.nextOccurrence}>
+          下次：{formatDate(event.nextOccurrence.solarDate)} · {event.nextOccurrence.label}
+        </p>
+      )}
 
       {/* 操作按钮 */}
       {(onEdit || onDelete) && (

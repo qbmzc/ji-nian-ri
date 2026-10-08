@@ -5,6 +5,7 @@ import {
   ValidationError,
   NotFoundError,
   calculateDays,
+  calculateNextOccurrence,
 } from "../services/eventService.js";
 import type { CreateEventInput } from "../../shared/types.js";
 import path from "path";
@@ -196,6 +197,15 @@ describe("EventService", () => {
       }
     });
 
+    it("年度分类保留累计天数并提供下一次到来日期", () => {
+      service.createEvent({ name: "生日", date: "2020-02-14", category: "生日" });
+      const [event] = service.getAllEvents();
+      expect(event.dayCalculation.solarDate).toBe("2020-02-14");
+      expect(event.nextOccurrence).toBeDefined();
+      expect(event.nextOccurrence!.solarDate).toMatch(/^\d{4}-02-14$/);
+      expect(event.nextOccurrence!.type).toMatch(/^(today|future)$/);
+    });
+
     it("应返回按日期排序的事件", () => {
       service.createEvent({ name: "后面", date: "2025-12-01" });
       service.createEvent({ name: "前面", date: "2024-01-01" });
@@ -288,6 +298,12 @@ describe("EventService", () => {
       const created = service.createEvent({ name: "测试", date: "2024-01-01" });
       expect(() => service.updateEvent(created.id, { date: "invalid" })).toThrow(ValidationError);
     });
+
+    it("切换日历类型时重新验证已有日期", () => {
+      const created = service.createEvent({ name: "测试", date: "2024-01-31" });
+      expect(() => service.updateEvent(created.id, { calendarType: "lunar" }))
+        .toThrow(ValidationError);
+    });
   });
 
   describe("deleteEvent", () => {
@@ -309,5 +325,31 @@ describe("EventService", () => {
       service.deleteEvent(created.id);
       expect(() => service.deleteEvent(created.id)).toThrow(NotFoundError);
     });
+  });
+});
+
+describe("年度纪念日计算", () => {
+  it("公历周年在当年未到时显示剩余天数", () => {
+    expect(calculateNextOccurrence("2020-10-01", "solar", "2026-09-23")).toEqual({
+      days: 8,
+      type: "future",
+      label: "还有 8 天开始",
+      solarDate: "2026-10-01",
+    });
+  });
+
+  it("公历周年已过时跳到下一年", () => {
+    expect(calculateNextOccurrence("2020-02-14", "solar", "2026-09-23").solarDate)
+      .toBe("2027-02-14");
+  });
+
+  it("闰日纪念日跳到下一个闰年", () => {
+    expect(calculateNextOccurrence("2020-02-29", "solar", "2025-03-01").solarDate)
+      .toBe("2028-02-29");
+  });
+
+  it("农历周年按农历年份转换，而不是公历月日", () => {
+    expect(calculateNextOccurrence("2024-08-15", "lunar", "2026-09-23").solarDate)
+      .toBe("2026-09-25");
   });
 });

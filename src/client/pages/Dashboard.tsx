@@ -30,8 +30,10 @@ import styles from "./Dashboard.module.css";
  */
 function sortEvents(events: EventWithDays[]): EventWithDays[] {
   return [...events].sort((a, b) => {
-    const aType = a.dayCalculation.type;
-    const bType = b.dayCalculation.type;
+    const aCalculation = a.nextOccurrence ?? a.dayCalculation;
+    const bCalculation = b.nextOccurrence ?? b.dayCalculation;
+    const aType = aCalculation.type;
+    const bType = bCalculation.type;
 
     // today 优先级最高，future 其次，past 最后
     const priority: Record<string, number> = { today: 0, future: 1, past: 2 };
@@ -43,7 +45,7 @@ function sortEvents(events: EventWithDays[]): EventWithDays[] {
     }
 
     // 同类型内按天数升序（天数少的排前面）
-    return a.dayCalculation.days - b.dayCalculation.days;
+    return aCalculation.days - bCalculation.days;
   });
 }
 
@@ -60,6 +62,8 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   // 错误信息
   const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   /**
    * 加载事件列表
@@ -86,6 +90,7 @@ export function Dashboard() {
    * 打开创建表单
    */
   function handleOpenCreate() {
+    setFormError(null);
     setEditingEvent(undefined);
     setShowForm(true);
   }
@@ -94,6 +99,7 @@ export function Dashboard() {
    * 打开编辑表单
    */
   function handleEdit(event: EventWithDays) {
+    setFormError(null);
     setEditingEvent(event);
     setShowForm(true);
   }
@@ -102,6 +108,7 @@ export function Dashboard() {
    * 关闭表单
    */
   function handleCloseForm() {
+    setFormError(null);
     setShowForm(false);
     setEditingEvent(undefined);
   }
@@ -110,6 +117,8 @@ export function Dashboard() {
    * 提交表单（创建或编辑）
    */
   async function handleSubmit(input: CreateEventInput | UpdateEventInput) {
+    setSubmitting(true);
+    setFormError(null);
     try {
       if (editingEvent) {
         // 编辑模式
@@ -121,7 +130,9 @@ export function Dashboard() {
       handleCloseForm();
       await loadEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Operation failed");
+      setFormError(err instanceof Error ? err.message : "保存失败，请重试");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -155,13 +166,17 @@ export function Dashboard() {
       />
 
       {/* 错误提示 */}
-      {error && <div className={styles.error}>{error}</div>}
+      {error && (
+        <div className={styles.error} role="alert">
+          {error} <button type="button" onClick={loadEvents}>重试</button>
+        </div>
+      )}
 
       {/* 加载状态 */}
       {loading && <div className={styles.loading}>加载中...</div>}
 
       {/* 事件列表或空状态 */}
-      {!loading && events.length === 0 && (
+      {!loading && !error && events.length === 0 && (
         <EmptyState onCreateClick={handleOpenCreate} />
       )}
 
@@ -184,6 +199,8 @@ export function Dashboard() {
           event={editingEvent}
           onSubmit={handleSubmit}
           onCancel={handleCloseForm}
+          error={formError}
+          submitting={submitting}
         />
       )}
     </div>

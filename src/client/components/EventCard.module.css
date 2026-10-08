@@ -98,3 +98,9 @@
 .deleteBtn:hover {
   background: #fde0d9;
 }
+.nextOccurrence {
+  margin: 0 0 0.75rem;
+  color: #4a87be;
+  font-size: 0.85rem;
+  text-align: center;
+}
