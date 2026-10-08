@@ -153,9 +153,13 @@ export function Dashboard() {
     <div className={styles.container}>
       {/* 页面头部 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>我的纪念日</h1>
+        <div>
+          <p className={styles.eyebrow}>每一天，都值得珍藏</p>
+          <h1 className={styles.title}>我的纪念日<span className={styles.titleDot}>.</span></h1>
+          <p className={styles.subtitle}>记住重要的日子，期待下一次相逢。</p>
+        </div>
         <button className={styles.addBtn} onClick={handleOpenCreate}>
-          添加
+          ＋ 添加纪念日
         </button>
       </div>
 

@@ -9,7 +9,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # 安装所有依赖（包括 devDependencies，构建需要）
-RUN npm ci
+RUN apk add --no-cache --virtual .build-deps python3 make g++ \
+    && npm ci \
+    && apk del .build-deps
 
 # 复制源代码和配置文件
 COPY tsconfig.json tsconfig.server.json tsconfig.client.json vite.config.ts index.html ./
@@ -32,7 +34,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # 仅安装生产依赖（better-sqlite3 原生模块需要在目标环境编译）
-RUN npm ci --omit=dev
+RUN apk add --no-cache --virtual .build-deps python3 make g++ \
+    && npm ci --omit=dev \
+    && apk del .build-deps
 
 # 从构建阶段复制前端构建产物
 COPY --from=build /app/dist/client/ dist/client/

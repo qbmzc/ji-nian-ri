@@ -2,9 +2,10 @@
 
 .card {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 1.25rem;
+  border-radius: 22px;
+  border: 1px solid #ece6ef;
+  box-shadow: 0 8px 30px #34234606;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -12,7 +13,7 @@
 }
 
 .card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 36px #34234612;
 }
 
 /* 卡片头部：图标 + 名称 */
@@ -30,7 +31,7 @@
 .name {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -42,8 +43,8 @@
   font-size: 0.7rem;
   padding: 0.15rem 0.5rem;
   border-radius: 10px;
-  background: #f0f4ff;
-  color: #5b9bd5;
+  background: #f3eefb;
+  color: var(--color-primary);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -54,7 +55,7 @@
   flex-direction: column;
   gap: 0.2rem;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .lunarDate {
@@ -82,12 +83,12 @@
 }
 
 .editBtn {
-  background: #f0f4ff;
-  color: #5b9bd5;
+  background: #f3eefb;
+  color: var(--color-primary);
 }
 
 .editBtn:hover {
-  background: #dce6f7;
+  background: #e9dff6;
 }
 
 .deleteBtn {
@@ -100,7 +101,10 @@
 }
 .nextOccurrence {
   margin: 0 0 0.75rem;
-  color: #4a87be;
+  color: var(--color-primary-hover);
   font-size: 0.85rem;
   text-align: center;
 }
+
+.icon { background: #faf5ef; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; }
+.dateInfo { padding-left: 54px; }

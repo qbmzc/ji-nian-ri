@@ -4,12 +4,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: 1.25rem 0;
 }
 
 /* 天数数字 - 突出显示 */
 .days {
-  font-size: 2rem;
+  font-size: clamp(40px, 5vw, 56px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -32,11 +34,11 @@
 
 /* 未来 - 冷色调 */
 .future .days {
-  color: #5b9bd5;
+  color: var(--color-primary);
 }
 
 .future .label {
-  color: #4a87be;
+  color: var(--color-primary-hover);
 }
 
 /* 今天 - 高亮色 */
